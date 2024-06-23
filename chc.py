@@ -6,20 +6,44 @@ from confluent_kafka import Producer, Consumer, KafkaException
 from confluent_kafka.admin import AdminClient, NewTopic
 from confluent_kafka.schema_registry import SchemaRegistryClient, schema_registry
 
-# Configuration
-bootstrap_servers = 'localhost:9092'
-schema_registry_url = 'https://localhost:8081'
-connect_cluster_url = 'https://localhost:8083'
-ksql_cluster_url = 'https://localhost:8088'
-servers_file_path = 'servers.txt'  # Path to the file with server names and ports
+# Configuration for different environments
+environments = {
+    'dev': {
+        'bootstrap_servers': 'dev-bootstrap-server:9092',
+        'schema_registry_url': 'https://dev-schema-registry:8081',
+        'connect_cluster_url': 'https://dev-connect-cluster:8083',
+        'ksql_cluster_url': 'https://dev-ksql-cluster:8088',
+        'auth': ('dev_username', 'dev_password')
+    },
+    'qa': {
+        'bootstrap_servers': 'qa-bootstrap-server:9092',
+        'schema_registry_url': 'https://qa-schema-registry:8081',
+        'connect_cluster_url': 'https://qa-connect-cluster:8083',
+        'ksql_cluster_url': 'https://qa-ksql-cluster:8088',
+        'auth': ('qa_username', 'qa_password')
+    },
+    'prod': {
+        'bootstrap_servers': 'prod-bootstrap-server:9092',
+        'schema_registry_url': 'https://prod-schema-registry:8081',
+        'connect_cluster_url': 'https://prod-connect-cluster:8083',
+        'ksql_cluster_url': 'https://prod-ksql-cluster:8088',
+        'auth': ('prod_username', 'prod_password')
+    }
+}
 
-# SSL and SASL configuration
+# Set the environment
+environment = 'dev'  # Change this to 'qa' or 'prod' as needed
+
+# Get configuration for the selected environment
+config = environments[environment]
+
+# SSL and SASL configuration (certificates are the same across environments)
 ssl_sasl_config = {
-    'bootstrap.servers': bootstrap_servers,
+    'bootstrap.servers': config['bootstrap_servers'],
     'security.protocol': 'SASL_SSL',
     'sasl.mechanisms': 'PLAIN',
-    'sasl.username': 'your_username',
-    'sasl.password': 'your_password',
+    'sasl.username': config['auth'][0],
+    'sasl.password': config['auth'][1],
     'ssl.ca.location': '/path/to/ca-cert',
     'ssl.certificate.location': '/path/to/client-cert',
     'ssl.key.location': '/path/to/client-key'
@@ -28,7 +52,7 @@ ssl_sasl_config = {
 # REST API mTLS and Basic Authentication Configuration
 cert = ('/path/to/client-cert', '/path/to/client-key')
 verify = '/path/to/ca-cert'
-auth = ('api_username', 'api_password')
+auth = config['auth']
 
 def create_topic(topic_name):
     admin_client = AdminClient(ssl_sasl_config)
@@ -76,7 +100,7 @@ def consume_message(topic_name, expected_value):
 
 def register_schema(topic_name):
     schema_registry_client = SchemaRegistryClient({
-        'url': schema_registry_url,
+        'url': config['schema_registry_url'],
         'ssl.ca.location': '/path/to/ca-cert',
         'ssl.certificate.location': '/path/to/client-cert',
         'ssl.key.location': '/path/to/client-key'
@@ -90,7 +114,7 @@ def register_schema(topic_name):
 
 def check_connect_cluster():
     try:
-        response = requests.get(f'{connect_cluster_url}/connectors', auth=auth, cert=cert, verify=verify)
+        response = requests.get(f'{config["connect_cluster_url"]}/connectors', auth=auth, cert=cert, verify=verify)
         if response.status_code == 200:
             return 'Successful'
         else:
@@ -100,7 +124,7 @@ def check_connect_cluster():
 
 def check_ksql_cluster():
     try:
-        response = requests.get(f'{ksql_cluster_url}/info', auth=auth, cert=cert, verify=verify)
+        response = requests.get(f'{config["ksql_cluster_url"]}/info', auth=auth, cert=cert, verify=verify)
         if response.status_code == 200:
             return 'Successful'
         else:
@@ -114,7 +138,7 @@ def register_secret():
         "value": "s3cr3t"
     }
     try:
-        response = requests.post(f'{connect_cluster_url}/secrets', json=secret_data, auth=auth, cert=cert, verify=verify)
+        response = requests.post(f'{config["connect_cluster_url"]}/secrets', json=secret_data, auth=auth, cert=cert, verify=verify)
         if response.status_code == 200:
             return 'Successful'
         else:
@@ -124,7 +148,7 @@ def register_secret():
 
 def retrieve_secret():
     try:
-        response = requests.get(f'{connect_cluster_url}/secrets/test-secret', auth=auth, cert=cert, verify=verify)
+        response = requests.get(f'{config["connect_cluster_url"]}/secrets/test-secret', auth=auth, cert=cert, verify=verify)
         if response.status_code == 200:
             return 'Successful'
         else:
