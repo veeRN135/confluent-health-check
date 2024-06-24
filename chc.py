@@ -1,21 +1,11 @@
-To record the partition and offset of produced messages and ensure that the consumer reads the same messages, we can enhance the `produce_message` function to return these details. The `consume_message` function will then use the recorded partition and offset to fetch the specific message.
-
-### Updated `produce_message` Function
-
-Here, the `produce_message` function captures the partition and offset of the produced message using the delivery report callback.
-
-### Updated `consume_message` Function
-
-The `consume_message` function will be updated to consume the message from the specific partition and offset.
-
-### Complete Script with Updates
+Here's the complete, updated code incorporating the fixes for the `produce_message` and `consume_message` functions, along with the other required functionalities:
 
 ```python
 import random
 import string
 import requests
 import socket
-from confluent_kafka import Producer, Consumer, KafkaException, Message
+from confluent_kafka import Producer, Consumer, KafkaException, TopicPartition
 from confluent_kafka.admin import AdminClient, NewTopic
 from confluent_kafka.schema_registry import SchemaRegistryClient, schema_registry
 
@@ -85,20 +75,21 @@ def create_topic(topic_name):
 def produce_message(topic_name):
     producer = Producer(ssl_sasl_config)
     message_value = 'test-message-value'
+    delivery_info = {}
 
     def delivery_report(err, msg):
         if err is not None:
-            raise KafkaException(f'Message delivery failed: {err}')
+            delivery_info['error'] = str(err)
         else:
-            return {
-                'partition': msg.partition(),
-                'offset': msg.offset()
-            }
+            delivery_info['partition'] = msg.partition()
+            delivery_info['offset'] = msg.offset()
 
     try:
         producer.produce(topic_name, key='key', value=message_value, callback=delivery_report)
         producer.flush()
-        return 'Successful', message_value, delivery_report
+        if 'error' in delivery_info:
+            return f'Failed: {delivery_info["error"]}', None, None
+        return 'Successful', message_value, delivery_info
     except KafkaException as e:
         return f'Failed: {str(e)}', None, None
     except Exception as e:
@@ -209,13 +200,20 @@ topic_name = 'test-' + ''.join(random.choices(string.ascii_lowercase + string.di
 # Perform tests
 create_topic_result = create_topic(topic_name)
 produce_message_result, produced_value, delivery_info = produce_message(topic_name)
-consume_message_result = consume_message(topic_name, delivery_info['partition'], delivery_info['offset'], produced_value)
+
+if delivery_info:
+    partition = delivery_info['partition']
+    offset = delivery_info['offset']
+    consume_message_result = consume_message(topic_name, partition, offset, produced_value)
+else:
+    consume_message_result = 'Failed: No delivery information available'
+
 register_schema_result = register_schema(topic_name)
 check_connect_cluster_result = check_connect_cluster()
 check_ksql_cluster_result = check_ksql_cluster()
 register_secret_result = register_secret()
 retrieve_secret_result = retrieve_secret()
-check_server_ports_result, server_ports_status = check_server_ports(servers_file_path)
+check_server_ports_result, server_ports_status = check_server_ports('/path/to/servers_file')
 
 # Report results
 results = {
@@ -234,7 +232,7 @@ results = {
 for test, result in results.items():
     print(f'{test}: {result}')
 
-if server_ports_status
+if server_ports_status:
     print('Server Ports Status:')
-    for server_port, status in server_ports_status.items():
+    for server, status in server_ports_status.items():
         print(f'{server_port}: {status}')
