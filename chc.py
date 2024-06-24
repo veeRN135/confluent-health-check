@@ -188,18 +188,21 @@ def retrieve_secret():
 
 def check_server_ports(file_path):
     results = {}
+    context = ssl.create_default_context()
+    context.check_hostname = False
+    context.verify_mode = ssl.CERT_NONE
     try:
         with open(file_path, 'r') as file:
             lines = file.readlines()
             for line in lines:
                 server, port = line.strip().split(':')
                 port = int(port)
-                with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as sock:
-                    result = sock.connect_ex((server, port))
-                    if result == 0:
-                        results[f'{server}:{port}'] = 'Listening'
-                    else:
-                        results[f'{server}:{port}'] = 'Not Listening'
+                try:
+                    with socket.create_connection((server, port)) as sock:
+                        with context.wrap_socket(sock, server_hostname=server) as ssock:
+                            results[f'{server}:{port}'] = 'Listening'
+                except Exception as e:
+                    results[f'{server}:{port}'] = f'Failed: {str(e)}'
         return 'Successful', results
     except Exception as e:
         return f'Failed: {str(e)}', None
