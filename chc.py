@@ -1,6 +1,3 @@
-Here's the complete, updated code incorporating the fixes for the `produce_message` and `consume_message` functions, along with the other required functionalities:
-
-```python
 import random
 import string
 import requests
@@ -132,6 +129,19 @@ def register_schema(topic_name):
     except Exception as e:
         return f'Failed: {str(e)}'
 
+def retrieve_schema(topic_name):
+    schema_registry_client = SchemaRegistryClient({
+        'url': config['schema_registry_url'],
+        'ssl.ca.location': '/path/to/ca-cert',
+        'ssl.certificate.location': '/path/to/client-cert',
+        'ssl.key.location': '/path/to/client-key'
+    })
+    try:
+        schema = schema_registry_client.get_latest_version(f'{topic_name}-value')
+        return f'Successful: {schema.schema.schema_str}'
+    except Exception as e:
+        return f'Failed: {str(e)}'
+
 def check_connect_cluster():
     try:
         response = requests.get(f'{config["connect_cluster_url"]}/connectors', auth=auth, cert=cert, verify=verify)
@@ -209,6 +219,7 @@ else:
     consume_message_result = 'Failed: No delivery information available'
 
 register_schema_result = register_schema(topic_name)
+retrieve_schema_result = retrieve_schema(topic_name)
 check_connect_cluster_result = check_connect_cluster()
 check_ksql_cluster_result = check_ksql_cluster()
 register_secret_result = register_secret()
@@ -221,6 +232,7 @@ results = {
     'Produce Message': produce_message_result,
     'Consume Message': consume_message_result,
     'Register Schema': register_schema_result,
+    'Retrieve Schema': retrieve_schema_result,
     'Check Connect Cluster': check_connect_cluster_result,
     'Check KSQL Cluster': check_ksql_cluster_result,
     'Register Secret': register_secret_result,
