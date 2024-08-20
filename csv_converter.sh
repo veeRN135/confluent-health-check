@@ -13,6 +13,8 @@ expecting_qmname=false
 
 # Read the input file line by line
 while IFS= read -r line; do
+  # Print each line being processed (for debugging purposes)
+  echo "Processing line: '$line'"
 
   # Skip lines that consist only of underscores
   if [[ "$line" =~ ^_+$ ]]; then
@@ -21,6 +23,7 @@ while IFS= read -r line; do
 
   # If the line consists only of dashes, reset QMNAME and indicate that the next line should be the new QMNAME
   if [[ "$line" =~ ^-+$ ]]; then
+    QMNAME=""
     expecting_qmname=true
     continue
   fi
@@ -28,6 +31,7 @@ while IFS= read -r line; do
   # If we're expecting a QMNAME after dashes, set QMNAME
   if $expecting_qmname; then
     QMNAME="$line"
+    echo "Setting QMNAME to: $QMNAME"  # Debugging output
     expecting_qmname=false
     continue
   fi
@@ -35,6 +39,7 @@ while IFS= read -r line; do
   # If QMNAME is set, treat the current line as a data line
   if [[ -n "$QMNAME" ]]; then
     echo "$QMNAME:$line" >> "$output_file"
+    echo "Writing to output: $QMNAME:$line"  # Debugging output
   fi
 
 done < "$input_file"
