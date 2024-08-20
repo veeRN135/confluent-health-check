@@ -12,8 +12,8 @@ QMNAME=""
 
 # Read the input file line by line
 while IFS= read -r line; do
-  # If the line consists only of underscores, skip it
-  if [[ "$line" =~ ^_+$ ]]; then
+  # If the line is empty or consists only of underscores, skip it
+  if [[ -z "$line" || "$line" =~ ^_+$ ]]; then
     continue
   fi
 
