@@ -9,37 +9,34 @@ output_file="output.csv"
 
 # Initialize QMNAME variable
 QMNAME=""
-expecting_qmname=false
 
 # Read the input file line by line
 while IFS= read -r line; do
-  # Print each line being processed (for debugging purposes)
-  echo "Processing line: '$line'"
 
-  # Skip lines that consist only of underscores
-  if [[ "$line" =~ ^_+$ ]]; then
+  # Debugging: print each line being processed
+  echo "DEBUG: Processing line: '$line'"
+
+  # Skip lines that consist only of underscores or are empty
+  if [[ "$line" =~ ^_+$ || -z "$line" ]]; then
+    echo "DEBUG: Skipping underscore or empty line"
     continue
   fi
 
-  # If the line consists only of dashes, reset QMNAME and indicate that the next line should be the new QMNAME
+  # If the line consists only of dashes, prepare for a new QMNAME
   if [[ "$line" =~ ^-+$ ]]; then
+    echo "DEBUG: Found dashes, resetting QMNAME"
     QMNAME=""
-    expecting_qmname=true
     continue
   fi
 
-  # If we're expecting a QMNAME after dashes, set QMNAME
-  if $expecting_qmname; then
+  # If QMNAME is empty, set it with the current line
+  if [[ -z "$QMNAME" ]]; then
     QMNAME="$line"
-    echo "Setting QMNAME to: $QMNAME"  # Debugging output
-    expecting_qmname=false
-    continue
-  fi
-
-  # If QMNAME is set, treat the current line as a data line
-  if [[ -n "$QMNAME" ]]; then
+    echo "DEBUG: Setting QMNAME to: '$QMNAME'"
+  else
+    # Write the data line to the output file with QMNAME prefix
     echo "$QMNAME:$line" >> "$output_file"
-    echo "Writing to output: $QMNAME:$line"  # Debugging output
+    echo "DEBUG: Writing to output: '$QMNAME:$line'"
   fi
 
 done < "$input_file"
