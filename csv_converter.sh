@@ -12,12 +12,14 @@ QMNAME=""
 
 # Read the input file line by line
 while IFS= read -r line; do
-  # Skip lines consisting only of underscores or dashes
-  if [[ "$line" =~ ^_+$ || "$line" =~ ^-+$ ]]; then
-    # Reset QMNAME if a separator line (dashes) is encountered
-    if [[ "$line" =~ ^-+$ ]]; then
-      QMNAME=""
-    fi
+  # If the line consists only of underscores, skip it
+  if [[ "$line" =~ ^_+$ ]]; then
+    continue
+  fi
+
+  # If the line consists only of dashes, reset QMNAME and skip it
+  if [[ "$line" =~ ^-+$ ]]; then
+    QMNAME=""
     continue
   fi
 
@@ -25,7 +27,7 @@ while IFS= read -r line; do
   if [[ -z "$QMNAME" ]]; then
     QMNAME="$line"
   else
-    # If QMNAME is set, treat the current line as data line
+    # If QMNAME is set, treat the current line as a data line
     echo "$QMNAME:$line" >> "$output_file"
   fi
 done < "$input_file"
