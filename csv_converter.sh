@@ -13,6 +13,9 @@ QMNAME=""
 # Read the input file line by line
 while IFS= read -r line; do
 
+  # Strip leading and trailing whitespace and carriage returns
+  line=$(echo "$line" | tr -d '\r' | xargs)
+
   # Debugging: print each line being processed
   echo "DEBUG: Processing line: '$line'"
 
