@@ -52,9 +52,13 @@ if mismatches:
     print("Mismatched Offsets:")
     for mismatch in mismatches:
         print(
-            f"Topic: {mismatch['topic']}, Partition: {mismatch['partition']}, "
-            f"File1 Offset: {mismatch['file1_offset']}, File2 Offset: {mismatch['file2_offset']}, "
-            f"Difference: {mismatch['difference']}"
+            "Topic: %s, Partition: %s, File1 Offset: %s, File2 Offset: %s, Difference: %s" % (
+                mismatch["topic"],
+                mismatch["partition"],
+                mismatch["file1_offset"],
+                mismatch["file2_offset"],
+                mismatch["difference"]
+            )
         )
 else:
-    print("All offsets match.")
+    print("
