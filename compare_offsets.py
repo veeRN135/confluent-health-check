@@ -21,7 +21,7 @@ mismatches = []
 for key in offsets_file1:
     if key in offsets_file2:
         difference = offsets_file1[key] - offsets_file2[key]  # Calculate signed difference
-        if abs(difference) > threshold:  # Check if the difference exceeds the threshold
+        if abs(difference) > threshold:  # Check if the absolute value of the difference exceeds the threshold
             mismatches.append({
                 "topic": key[0],
                 "partition": key[1],
@@ -53,6 +53,7 @@ for key in offsets_file2:
 if mismatches:
     print("Mismatched Offsets (threshold: %d):" % threshold)
     for mismatch in mismatches:
+        # Only report if difference is N/A or exceeds the threshold
         if mismatch["difference"] == "N/A" or abs(mismatch["difference"]) > threshold:
             print(
                 "Topic: %s, Partition: %s, File1 Offset: %s, File2 Offset: %s, Difference: %s" % (
