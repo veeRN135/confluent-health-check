@@ -51,8 +51,10 @@ for key in offsets_file2:
 if mismatches:
     print("Mismatched Offsets:")
     for mismatch in mismatches:
-        print(f"Topic: {mismatch['topic']}, Partition: {mismatch['partition']}, "
-              f"File1 Offset: {mismatch['file1_offset']}, File2 Offset: {mismatch['file2_offset']}, "
-              f"Difference: {mismatch['difference']}")
+        print(
+            f"Topic: {mismatch['topic']}, Partition: {mismatch['partition']}, "
+            f"File1 Offset: {mismatch['file1_offset']}, File2 Offset: {mismatch['file2_offset']}, "
+            f"Difference: {mismatch['difference']}"
+        )
 else:
     print("All offsets match.")
