@@ -61,4 +61,4 @@ if mismatches:
             )
         )
 else:
-    print("
+    print("All offsets match.")
