@@ -1,6 +1,7 @@
 # File paths
 file1_path = "file1.txt"
 file2_path = "file2.txt"
+threshold = 10  # Set your threshold value here
 
 # Function to load file data into a dictionary
 def load_offsets(file_path):
@@ -19,13 +20,14 @@ offsets_file2 = load_offsets(file2_path)
 mismatches = []
 for key in offsets_file1:
     if key in offsets_file2:
-        if offsets_file1[key] != offsets_file2[key]:
+        difference = offsets_file1[key] - offsets_file2[key]  # Calculate signed difference
+        if abs(difference) > threshold:  # Check if the difference exceeds the threshold
             mismatches.append({
                 "topic": key[0],
                 "partition": key[1],
                 "file1_offset": offsets_file1[key],
                 "file2_offset": offsets_file2[key],
-                "difference": abs(offsets_file1[key] - offsets_file2[key])
+                "difference": difference
             })
     else:
         mismatches.append({
@@ -49,16 +51,17 @@ for key in offsets_file2:
 
 # Report mismatches
 if mismatches:
-    print("Mismatched Offsets:")
+    print("Mismatched Offsets (threshold: %d):" % threshold)
     for mismatch in mismatches:
-        print(
-            "Topic: %s, Partition: %s, File1 Offset: %s, File2 Offset: %s, Difference: %s" % (
-                mismatch["topic"],
-                mismatch["partition"],
-                mismatch["file1_offset"],
-                mismatch["file2_offset"],
-                mismatch["difference"]
+        if mismatch["difference"] == "N/A" or abs(mismatch["difference"]) > threshold:
+            print(
+                "Topic: %s, Partition: %s, File1 Offset: %s, File2 Offset: %s, Difference: %s" % (
+                    mismatch["topic"],
+                    mismatch["partition"],
+                    mismatch["file1_offset"],
+                    mismatch["file2_offset"],
+                    mismatch["difference"]
+                )
             )
-        )
 else:
     print("All offsets match.")
